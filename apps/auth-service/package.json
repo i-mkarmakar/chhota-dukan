@@ -6,7 +6,7 @@
     "dev": "node src/main.ts"
   },
   "nx": {
-    "name": "auth-service",
+    "name": "@chhota-dukan/auth-service",
     "projectType": "application",
     "sourceRoot": "auth-service/src",
     "targets": {
