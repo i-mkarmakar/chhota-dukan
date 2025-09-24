@@ -47,7 +47,7 @@ const ForgotPassword = () => {
   const requestOtpMutation = useMutation({
     mutationFn: async ({ email }: { email: string }) => {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/request-password-user`,
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/forgot-password-user`,
         {
           email,
         }
@@ -146,12 +146,6 @@ const ForgotPassword = () => {
 
   return (
     <div className="w-full py-10 min-h-[85vh] bg-[#f1f1f1]">
-      <h1 className="text-4xl font-Poppins font-semibold text-black text-center">
-        Forgot Password
-      </h1>
-      <p className="text-center text-lg font-medium py-3 text-[#00000099]">
-        Home . Forgot-password
-      </p>
 
       <div className="w-full flex justify-center">
         <div className="md:w-[480px] p-8 bg-white shadow rounded-lg">
@@ -217,7 +211,7 @@ const ForgotPassword = () => {
                     }}
                     type="text"
                     maxLength={1}
-                    className="w-12 h-12 text-center border border-gray-300 rounded"
+                    className="w-12 h-12 text-center border border-gray-300 !rounded"
                     value={digit}
                     onChange={(e) => handelOtpChange(index, e.target.value)}
                     onKeyDown={(e) => handelOtpKeyDown(index, e)}
@@ -227,7 +221,7 @@ const ForgotPassword = () => {
               <button
                 onClick={() => verifyOtpMutation.mutate()}
                 disabled={verifyOtpMutation.isPending}
-                className="w-full text-lg cursor-pointer bg-black text-white"
+                className="w-full text-lg cursor-pointer bg-black text-white mt-4 py-2 rounded-lg"
               >
                 {verifyOtpMutation.isPending ? "Verifying..." : "Verify OTP"}
               </button>
