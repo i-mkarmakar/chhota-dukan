@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Search, CircleUserRound, HeartIcon, ShoppingCart } from "lucide-react";
 import React from "react";
