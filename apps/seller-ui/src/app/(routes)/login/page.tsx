@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import GoogleButton from "../../shared/components/google-button";
 import { Eye, EyeOff } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
@@ -52,7 +51,7 @@ const Login = () => {
   };
 
   return (
-    <div className="w-full py-10 min-h-[85vh] bg-[#f1f1f1]">
+    <div className="w-full py-10 min-h-screen bg-[#f1f1f1]">
 
       <div className="w-full flex justify-center">
         <div className="md:w-[480px] p-8 bg-white shadow rounded-lg">
@@ -65,8 +64,6 @@ const Login = () => {
               Sign up
             </Link>
           </p>
-
-          <GoogleButton />
 
           <div className="flex items-center my-5 text-gray-400 text-sm">
             <div className="flex-1 border-t border-gray-300" />

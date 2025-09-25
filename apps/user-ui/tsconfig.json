@@ -40,7 +40,7 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     ".next/types/**/*.ts"
-, "src/app/(routes)/forgot-password"  ],
+, "../seller-ui/src/app/(routes)/forgot-password"  ],
   "exclude": [
     "out-tsc",
     "dist",
