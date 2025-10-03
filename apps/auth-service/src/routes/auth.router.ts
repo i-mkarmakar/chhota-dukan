@@ -8,9 +8,11 @@ import {
   refreshToken,
   verifyUserForgotPassword,
   getUser,
+  registerSeller,
+  verifySeller,
+  createShop,
 } from "../controller/auth.controller";
 import isAuthenticated from "@packages/middleware/isAuthenticated";
-
 
 const router: Router = express.Router();
 
@@ -22,5 +24,8 @@ router.get("/logged-in-user", isAuthenticated, getUser);
 router.post("/forgot-password-user", userForgotPassword);
 router.post("/reset-password-user", resetUserPassword);
 router.post("/verify-forgot-password-user", verifyUserForgotPassword);
+router.post("/seller-registration", registerSeller);
+router.post("/verify-seller", verifySeller);
+router.post("/create-shop", createShop);
 
 export default router;

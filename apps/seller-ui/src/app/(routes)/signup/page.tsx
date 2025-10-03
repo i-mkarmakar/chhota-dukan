@@ -7,15 +7,17 @@ import { Eye, EyeOff } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import { countries } from "apps/seller-ui/src/utils/countries";
+import CreateShop from "../../shared/modules/auth/create-shop";
 
 const Signup = () => {
-  const [activeStep, setActiveStep] = useState(1);
+  const [activeStep, setActiveStep] = useState(3);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [canResend, setCanResend] = useState(true);
   const [timer, setTimer] = useState(60);
   const [otp, setOtp] = useState(["", "", "", ""]);
   const [showOtp, setShowOtp] = useState(false);
-  const [userData, setUserData] = useState<FormData | null>(null);
+  const [sellerData, setSellerData] = useState<FormData | null>(null);
+  const [sellerId, setSellerId] = useState("");
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const router = useRouter();
 
@@ -45,13 +47,13 @@ const Signup = () => {
   const signupMutation = useMutation({
     mutationFn: async (data: FormData) => {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/user-registration`,
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/seller-registration`,
         data
       );
       return response.data;
     },
     onSuccess: (_, formData) => {
-      setUserData(formData);
+      setSellerData(formData);
       setShowOtp(true);
       setCanResend(false);
       setTimer(60);
@@ -61,15 +63,16 @@ const Signup = () => {
 
   const verifyOtpMutation = useMutation({
     mutationFn: async () => {
-      if (!userData) return;
+      if (!sellerData) return;
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/verify-user`,
-        { ...userData, otp: otp.join("") }
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/verify-seller`,
+        { ...sellerData, otp: otp.join("") }
       );
       return response.data;
     },
-    onSuccess: () => {
-      router.push("/login");
+    onSuccess: (data) => {
+      setSellerId(data?.seller?.id);
+      setActiveStep(2);
     },
   });
 
@@ -96,8 +99,23 @@ const Signup = () => {
   };
 
   const resendOtp = () => {
-    if (userData) {
-      signupMutation.mutate(userData);
+    if (sellerData) {
+      signupMutation.mutate(sellerData);
+    }
+  };
+
+  const connectStripe = async () => {
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/create-stripe-link`,
+        { sellerId }
+      );
+
+      if (response.data.url) {
+        window.location.href = response.data.url;
+      }
+    } catch (error) {
+      console.log("Stripe Connection Error:", error);
     }
   };
 
@@ -321,6 +339,21 @@ const Signup = () => {
               </div>
             )}
           </>
+        )}
+        {activeStep === 2 && (
+          <CreateShop sellerId={sellerId} setActiveStep={setActiveStep} />
+        )}
+        {activeStep === 3 && (
+          <div className="text-center">
+            <h3 className="text-2xl font-semibold">Withdraw Method</h3>
+            <br />
+            <button
+              onClick={connectStripe}
+              className="w-full m-auto flex items-center justify-center gap-3 text-lg bg-[#334155] text-white py-2 rounded-lg"
+            >
+              Connect Stripe
+            </button>
+          </div>
         )}
       </div>
     </div>

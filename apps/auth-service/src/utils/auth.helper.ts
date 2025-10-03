@@ -101,7 +101,7 @@ export const verifyOtp = async (
     await redis.set(failedAttemptsKey, failedAttempts + 1, "EX", 300); // Track failed attempts for 5 minutes
     throw new ValidationError(
       `Incorrect OTP. ${2 - failedAttempts} attempts left.`
-    );    
+    );
   }
   await redis.del(`otp:${email}`, failedAttemptsKey); // Clear OTP and attempts on success
 };
@@ -119,8 +119,9 @@ export const handleForgotPassword = async (
 
     // Find user/seller in DB
     const user =
-      userType === "user" &&
-      (await prisma.users.findUnique({ where: { email } }));
+      userType === "user"
+        ? await prisma.users.findUnique({ where: { email } })
+        : await prisma.sellers.findUnique({ where: { email } });
 
     if (!user) throw new ValidationError(`${userType} not found!`);
 
@@ -129,7 +130,13 @@ export const handleForgotPassword = async (
     await trackOtpRequests(email, next);
 
     // Generate OTP and send Email
-    await sendOtp(user.name, user.email, "forgot-password-mail");
+    await sendOtp(
+      user.name,
+      user.email,
+      userType === "user"
+        ? "forgot-password-user-mail"
+        : "forgot-password-seller-mail"
+    );
 
     res.status(200).json({
       message: "OTP sent to email. Please verify your account.",
