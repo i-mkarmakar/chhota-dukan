@@ -2,7 +2,6 @@
 
 import React, { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
@@ -10,7 +9,7 @@ import { countries } from "apps/seller-ui/src/utils/countries";
 import CreateShop from "../../shared/modules/auth/create-shop";
 
 const Signup = () => {
-  const [activeStep, setActiveStep] = useState(3);
+  const [activeStep, setActiveStep] = useState(1);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [canResend, setCanResend] = useState(true);
   const [timer, setTimer] = useState(60);
@@ -19,7 +18,6 @@ const Signup = () => {
   const [sellerData, setSellerData] = useState<FormData | null>(null);
   const [sellerId, setSellerId] = useState("");
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
-  const router = useRouter();
 
   const {
     register,

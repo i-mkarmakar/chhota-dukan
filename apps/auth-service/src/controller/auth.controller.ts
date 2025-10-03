@@ -13,6 +13,11 @@ import prisma from "@packages/libs/prisma";
 import { AuthError, ValidationError } from "@packages/error-handler";
 import jwt, { JsonWebTokenError } from "jsonwebtoken";
 import { setCookie } from "../utils/cookies/setCookie";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2025-09-30.clover",
+});
 
 // Register a new user
 export const userRegistration = async (
@@ -352,3 +357,109 @@ export const createShop = async (
 };
 
 // create stripe connect account link
+export const createStripeConnectLink = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { sellerId } = req.body;
+    if (!sellerId) return next(new ValidationError("Seller ID is required"));
+
+    const seller = await prisma.sellers.findUnique({
+      where: { id: sellerId },
+    });
+
+    if (!seller) {
+      return next(new ValidationError("Seller is not available with this id!"));
+    }
+    const account = await stripe.accounts.create({
+      type: "express",
+      email: seller?.email,
+      country: "US",
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      },
+    });
+
+    await prisma.sellers.update({
+      where: { id: sellerId },
+      data: { stripeId: account.id },
+    });
+
+    const accountLink = await stripe.accountLinks.create({
+      account: account.id,
+      refresh_url: `http://localhost:3000/success`,
+      return_url: `http://localhost:3000/success`,
+      type: "account_onboarding",
+    });
+
+    res.json({ url: accountLink.url });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// login seller
+export const loginSeller = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password)
+      return next(new ValidationError("Email and password are required!"));
+
+    const seller = await prisma.sellers.findUnique({ where: { email } });
+    if (!seller) return next(new ValidationError("Seller does not exist!"));
+
+    // verify password
+    const isMatch = await bcrypt.compare(password, seller.password!);
+    if (!isMatch) return next(new AuthError("Invalid email or password!"));
+
+    // Generate access and refresh token
+    const accessToken = jwt.sign(
+      { id: seller.id, role: "seller" },
+      process.env.ACCESS_TOKEN_SECRET as string,
+      {
+        expiresIn: "15m",
+      }
+    );
+    const refreshToken = jwt.sign(
+      { id: seller.id, role: "seller" },
+      process.env.REFRESH_TOKEN_SECRET as string,
+      { expiresIn: "7d" }
+    );
+
+    // strore the access and refresh token
+    setCookie(res, "seller_refresh_token", refreshToken);
+    setCookie(res, "seller_access_token", accessToken);
+
+    res.status(200).json({
+      message: "Login successful!",
+      seller: { id: seller.id, email: seller.email, name: seller.name },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// get logged in seller
+export const getSeller = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const seller = req.seller;
+    res.status(201).json({
+      success: true,
+      seller,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
