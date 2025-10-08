@@ -11,7 +11,7 @@ import {
   registerSeller,
   verifySeller,
   createShop,
-  createStripeConnectLink,
+  createCashfreeVendor,
   loginSeller,
   getSeller,
 } from "../controller/auth.controller";
@@ -31,8 +31,8 @@ router.post("/verify-forgot-password-user", verifyUserForgotPassword);
 router.post("/seller-registration", registerSeller);
 router.post("/verify-seller", verifySeller);
 router.post("/create-shop", createShop);
-router.post("/create-stripe-link", createStripeConnectLink);
-router.post("/login-seller", loginSeller)
-router.get("/logged-in-seller", isAuthenticated,isSeller, getSeller)
+router.post("/create-cashfree-vendor", createCashfreeVendor);
+router.post("/login-seller", loginSeller);
+router.get("/logged-in-seller", isAuthenticated, isSeller, getSeller);
 
 export default router;

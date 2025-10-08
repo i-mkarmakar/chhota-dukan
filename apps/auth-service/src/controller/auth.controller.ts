@@ -13,11 +13,6 @@ import prisma from "@packages/libs/prisma";
 import { AuthError, ValidationError } from "@packages/error-handler";
 import jwt, { JsonWebTokenError } from "jsonwebtoken";
 import { setCookie } from "../utils/cookies/setCookie";
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-09-30.clover",
-});
 
 // Register a new user
 export const userRegistration = async (
@@ -373,50 +368,93 @@ export const createShop = async (
   }
 };
 
-// create stripe connect account link
-export const createStripeConnectLink = async (
+// create cashfree vendor account
+export async function createCashfreeVendor(
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+) {
   try {
+    // extract and validate seller id
     const { sellerId } = req.body;
-    if (!sellerId) return next(new ValidationError("Seller ID is required"));
 
-    const seller = await prisma.sellers.findUnique({
-      where: { id: sellerId },
-    });
-
-    if (!seller) {
-      return next(new ValidationError("Seller is not available with this id!"));
+    if (!sellerId) {
+      return next(new ValidationError("Seller ID is required"));
     }
-    const account = await stripe.accounts.create({
-      type: "express",
-      email: seller?.email,
-      country: seller?.country || "US",
-      capabilities: {
-        card_payments: { requested: true },
-        transfers: { requested: true },
+
+    // find the seller by id first
+    const seller = await prisma.sellers.findUnique({ where: { id: sellerId } });
+    if (!seller) {
+      return next(new ValidationError("Seller not found in db"));
+    }
+
+    // vendor data
+    const sellerData = {
+      vendor_id: seller.id,
+      name: seller.name,
+      email: seller.email,
+      phone: seller.phone_number,
+      status: "ACTIVE",
+      bank: {
+        account_holder: seller.name,
+        account_number: "012345678901",
+        ifsc: "HDFC0000123",
       },
-    });
+      settlement_config: {
+        type: "ONDEMAND",
+      },
+      kyc_details: {
+        pan: "ABCDE1234F",
+        gst: "29ABCDE1234F1Z5",
+        cin: "U12345KA2020PTC123456",
+        passport: "A1234567",
+        business_name: "Chhota Dukan",
+        business_type: "E-commerce",
+        address: "123 Business St, City, State, 123456",
+        city: "City",
+        state: "State",
+        pincode: "123456",
+      },
+    };
+
+    // get the response
+    const response = await fetch(
+      `${process.env.CASHFREE_BASE_URL}/easy-split/vendors`,
+      {
+        method: "POST",
+        headers: {
+          "x-client-id": process.env.CASHFREE_APP_ID!,
+          "x-client-secret": process.env.CASHFREE_SECRET_KEY!,
+          "Content-Type": "application/json",
+          "x-api-version": "2025-01-01",
+        },
+        body: JSON.stringify(sellerData),
+      }
+    );
+
+    const data: any = await response.json();
+
+    if (!response.ok) {
+      console.error("Cashfree Error:", data);
+      throw new ValidationError(
+        (data && data.message) || "Failed to create vendor"
+      );
+    }
 
     await prisma.sellers.update({
       where: { id: sellerId },
-      data: { stripeId: account.id },
+      data: { cashfreeVendorId: data.vendor_id },
     });
 
-    const accountLink = await stripe.accountLinks.create({
-      account: account.id,
-      refresh_url: `http://localhost:3000/success`,
-      return_url: `http://localhost:3000/success`,
-      type: "account_onboarding",
+    res.status(201).json({
+      success: true,
+      vendor: data,
+      message: "Seller registered as Cashfree vendor successfully",
     });
-
-    res.json({ url: accountLink.url });
   } catch (error) {
-    return next(error);
+    next(error);
   }
-};
+}
 
 // login seller
 export const loginSeller = async (
