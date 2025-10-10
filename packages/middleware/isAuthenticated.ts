@@ -5,8 +5,8 @@ import jwt from "jsonwebtoken";
 const isAuthenticated = async (req: any, res: Response, next: NextFunction) => {
   try {
     const token =
-      req.cookies["access_token"] ||
-      req.cookies["seller_access_token"] ||
+      req.cookies["access-token"] ||
+      req.cookies["seller-access-token"] ||
       req.headers.authorization?.split(" ")[1];
 
     if (!token) {
@@ -14,7 +14,7 @@ const isAuthenticated = async (req: any, res: Response, next: NextFunction) => {
     }
 
     // verify token
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRECT!) as {
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!) as {
       id: string;
       role: "user" | "seller";
     };
@@ -53,5 +53,3 @@ const isAuthenticated = async (req: any, res: Response, next: NextFunction) => {
 };
 
 export default isAuthenticated;
-
-

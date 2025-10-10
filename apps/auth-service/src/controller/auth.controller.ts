@@ -35,7 +35,7 @@ export const userRegistration = async (
     await sendOtp(name, email, "user-activation-mail");
 
     res.status(200).json({
-      message: "OTP sent to your email. Please Verify for verify your account.",
+      message: "OTP sent to your email. Please verify your account with the OTP.",
     });
   } catch (error) {
     return next(error);
@@ -115,8 +115,8 @@ export const loginUser = async (
     );
 
     // store the access and refresh token in an httpOnly secure cookie
-    setCookie(res, "refresh_token", refreshToken);
-    setCookie(res, "access_token", accessToken);
+    setCookie(res, "refresh-token", refreshToken);
+    setCookie(res, "access-token", accessToken);
 
     res.status(200).json({
       message: "Login successful!",
@@ -135,13 +135,12 @@ export const refreshToken = async (
 ) => {
   try {
     const refreshToken =
-      req.cookies["refresh_token"] ||
+      req.cookies["refresh-token"] ||
       req.cookies["seller-refresh-token"] ||
       req.headers.authorization?.split(" ")[1];
 
-    if (!refreshToken) {
-      return new ValidationError("Unauthorized! No refresh token");
-    }
+    if (!refreshToken)
+      return next(new ValidationError("Unauthorized! No refresh token"));
 
     const decoded = jwt.verify(
       refreshToken,
@@ -149,8 +148,8 @@ export const refreshToken = async (
     ) as { id: string; role: string };
 
     if (!decoded || !decoded.id || !decoded.role) {
-      return new JsonWebTokenError("Invalid refresh token");
-    }
+      return next(new JsonWebTokenError("Invalid refresh token"));
+    }    
 
     let account;
     if (decoded.role === "user") {
@@ -176,7 +175,7 @@ export const refreshToken = async (
     );
 
     if (decoded.role === "user") {
-      setCookie(res, "access_token", newAccessToken);
+      setCookie(res, "access-token", newAccessToken);
     } else if (decoded.role === "seller") {
       setCookie(res, "seller-access-token", newAccessToken);
     }
@@ -277,7 +276,7 @@ export const registerSeller = async (
     await trackOtpRequests(email, next);
     await sendOtp(name, email, "seller-activation-mail");
     res.status(200).json({
-      message: "OTP sent to your email. Please Verify for verify your account.",
+      message: "OTP sent to your email. Please verify your account with the OTP.",
     });
   } catch (error) {
     next(error);
@@ -489,9 +488,9 @@ export const loginSeller = async (
       { expiresIn: "7d" }
     );
 
-    // strore the access and refresh token
-    setCookie(res, "seller_refresh_token", refreshToken);
-    setCookie(res, "seller_access_token", accessToken);
+// store the access and refresh token
+    setCookie(res, "seller-refresh-token", refreshToken);
+    setCookie(res, "seller-access-token", accessToken);
 
     res.status(200).json({
       message: "Login successful!",

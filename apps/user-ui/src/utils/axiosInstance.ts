@@ -6,7 +6,7 @@ const axiosInstance = axios.create({
 });
 
 let isRefreshing = false;
-let refreshSubscrribers: (() => void)[] = [];
+let refreshSubscribers: (() => void)[] = [];
 
 // Handle logout and prevent infinite loops
 const handleLogout = () => {
@@ -17,13 +17,13 @@ const handleLogout = () => {
 
 //Handle adding a new access token to queued requests
 const subscribeTokenRefresh = (callback: () => void) => {
-  refreshSubscrribers.push(callback);
+  refreshSubscribers.push(callback);
 };
 
 // Execute all the queued requests
 const onRefreshSuccess = () => {
-  refreshSubscrribers.forEach((callback) => callback());
-  refreshSubscrribers = [];
+  refreshSubscribers.forEach((callback) => callback());
+  refreshSubscribers = [];
 };
 
 //Handle API requests
@@ -51,8 +51,8 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
       try {
-        await axiosInstance.post(
-          `process.env.NEXT_PUBLIC_SERVER_URI}/api/refresh-token`,
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_SERVER_URI}/api/refresh-token`,
           {},
           { withCredentials: true }
         );
@@ -62,7 +62,7 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(originalRequest);
       } catch (error) {
         isRefreshing = false;
-        refreshSubscrribers = [];
+        refreshSubscribers = [];
         handleLogout();
         return Promise.reject(error);
       }
