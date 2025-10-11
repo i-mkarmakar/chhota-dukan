@@ -9,7 +9,7 @@
   "include": [
     "src/**/*.ts",
     "../../packages/**/*.ts"
-  ],
+, "../../packages/components/rich-text-editor/index.tsx"  ],
   "exclude": [
     "out-tsc",
     "dist",
